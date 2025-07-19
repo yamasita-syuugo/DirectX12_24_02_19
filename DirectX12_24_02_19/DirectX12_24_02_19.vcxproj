@@ -79,7 +79,7 @@
       <AdditionalIncludeDirectories>C:\Users\syuugo_main\Downloads\DirectXTex-main (1)\DirectXTex-main\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Users\syuugo_main\Downloads\DirectXTex-main (1)\DirectXTex-main\DirectXTex\Bin\Desktop_2022_Win10\x64\Debug</AdditionalLibraryDirectories>
     </Link>
@@ -95,7 +95,7 @@
       <AdditionalIncludeDirectories>C:\Users\syuugo_main\Downloads\DirectXTex-main (1)\DirectXTex-main\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>NotSet</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -111,7 +111,7 @@
       <AdditionalIncludeDirectories>C:\Users\syuugo_main\Downloads\DirectXTex-main (1)\DirectXTex-main\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Users\syuugo_main\Downloads\DirectXTex-main (1)\DirectXTex-main\DirectXTex\Bin\Desktop_2022_Win10\x64\Debug</AdditionalLibraryDirectories>
     </Link>
@@ -127,7 +127,7 @@
       <AdditionalIncludeDirectories>C:\Users\syuugo_main\Downloads\DirectXTex-main (1)\DirectXTex-main\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>NotSet</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -135,9 +135,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MY_ID3D12GraphicsCommandList.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="MY_ID3D12GraphicsCommandList.h" />
+    <ClInclude Include="StructData.h" />
     <ClInclude Include="UseHeader.h" />
     <ClInclude Include="value.h" />
   </ItemGroup>

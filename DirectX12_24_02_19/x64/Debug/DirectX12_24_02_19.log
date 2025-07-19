@@ -1,7 +1,8 @@
 ﻿  main.cpp
-C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(168,24): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
-C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(249,27): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
-C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(250,37): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
-C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(253,30): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
-C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(259,2): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(108,26): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(202,29): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(203,39): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(206,32): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(212,3): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(246,151): warning C4244: '=': 'UINT64' から 'UINT' への変換です。データが失われる可能性があります。
   DirectX12_24_02_19.vcxproj -> C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\x64\Debug\DirectX12_24_02_19.exe

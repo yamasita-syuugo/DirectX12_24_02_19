@@ -7,8 +7,36 @@
       "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\GameObject.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\GameObject.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\UseHeader.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\UseHeader.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\BasicShaderHeader.hlsli||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\BasicShaderHeader.hlsli||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\BasicVertexShader.hlsl||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\BasicVertexShader.hlsl||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\GameObject.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\GameObject.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\StructData.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\StructData.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,17 +46,105 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 8,
           "Children": [
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "GameObject.cpp",
+              "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\GameObject.cpp",
+              "RelativeDocumentMoniker": "DirectX12_24_02_19\\GameObject.cpp",
+              "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\GameObject.cpp",
+              "RelativeToolTip": "DirectX12_24_02_19\\GameObject.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAACAAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-06-16T01:52:27.609Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "StructData.h",
+              "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\StructData.h",
+              "RelativeDocumentMoniker": "DirectX12_24_02_19\\StructData.h",
+              "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\StructData.h",
+              "RelativeToolTip": "DirectX12_24_02_19\\StructData.h",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAEAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-06-16T05:22:19.006Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "GameObject.h",
+              "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\GameObject.h",
+              "RelativeDocumentMoniker": "DirectX12_24_02_19\\GameObject.h",
+              "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\GameObject.h",
+              "RelativeToolTip": "DirectX12_24_02_19\\GameObject.h",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABcAAAACAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-06-16T01:52:43.48Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "BasicVertexShader.hlsl",
+              "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\BasicVertexShader.hlsl",
+              "RelativeDocumentMoniker": "DirectX12_24_02_19\\BasicVertexShader.hlsl",
+              "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\BasicVertexShader.hlsl",
+              "RelativeToolTip": "DirectX12_24_02_19\\BasicVertexShader.hlsl",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAkAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002777|",
+              "WhenOpened": "2025-06-11T09:06:57.73Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "BasicShaderHeader.hlsli",
+              "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\BasicShaderHeader.hlsli",
+              "RelativeDocumentMoniker": "DirectX12_24_02_19\\BasicShaderHeader.hlsli",
+              "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\BasicShaderHeader.hlsli",
+              "RelativeToolTip": "DirectX12_24_02_19\\BasicShaderHeader.hlsli",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABAAAAAEAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-06-10T09:03:45.368Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "MY_ID3D12GraphicsCommandList.cpp",
+              "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.cpp",
+              "RelativeDocumentMoniker": "DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.cpp",
+              "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.cpp",
+              "RelativeToolTip": "DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.cpp",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAQAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-05-14T00:47:32.399Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MY_ID3D12GraphicsCommandList.h",
+              "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.h",
+              "RelativeDocumentMoniker": "DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.h",
+              "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.h",
+              "RelativeToolTip": "DirectX12_24_02_19\\MY_ID3D12GraphicsCommandList.h",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA0AAAACAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2025-05-14T00:43:33.599Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "UseHeader.h",
               "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\UseHeader.h",
               "RelativeDocumentMoniker": "DirectX12_24_02_19\\UseHeader.h",
               "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\UseHeader.h",
               "RelativeToolTip": "DirectX12_24_02_19\\UseHeader.h",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAABIAAAAZAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2024-03-27T10:53:23.714Z",
               "EditorCaption": ""
@@ -41,7 +157,7 @@
               "RelativeDocumentMoniker": "DirectX12_24_02_19\\main.cpp",
               "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\main.cpp*",
               "RelativeToolTip": "DirectX12_24_02_19\\main.cpp*",
-              "ViewState": "AQIAAPsAAAAAAAAAAAAcwJcBAAA2AAAA",
+              "ViewState": "AQIAAPMAAAAAAAAAAAAcwAwBAAAWAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-03-27T10:49:53.807Z",
               "EditorCaption": ""

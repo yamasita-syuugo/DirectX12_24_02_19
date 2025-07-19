@@ -1,5 +1,8 @@
 #pragma once
 
+#include<Windows.h>
+#include<iostream>
+
 #include<vector>
 using namespace std;
 #include<wrl/client.h>
@@ -17,3 +20,7 @@ using namespace DirectX;
 
 #include<DirectXTex.h>
 #pragma comment(lib,"DirectXTex.lib")
+
+#include"StructData.h"
+
+#include"GameObject.h"
