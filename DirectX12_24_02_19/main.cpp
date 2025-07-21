@@ -115,6 +115,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 		}
 	}
+	//テクスチャデータ作成----------------------------------
+	//vector<TexRGBA> texturedata(256 * 256);
+	//for (auto& rgba : texturedata) {
+	//	rgba.R = rand() % 256;
+	//	rgba.G = rand() % 256;
+	//	rgba.B = rand() % 256;
+	//	rgba.A = 255;
+	//}
 	//座標計算----------------------------------------------
 	Vertex vertices[] = {
 		{{-0.9f,-0.3f,0.0f},{0.0f,1.0f}},
@@ -136,14 +144,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		4,5,6,
 		6,5,7,
 	};
-	//テクスチャデータ作成----------------------------------
-	//vector<TexRGBA> texturedata(256 * 256);
-	//for (auto& rgba : texturedata) {
-	//	rgba.R = rand() % 256;
-	//	rgba.G = rand() % 256;
-	//	rgba.B = rand() % 256;
-	//	rgba.A = 255;
-	//}
 	TexMetadata metadate = {};
 	ScratchImage scratchImg = {};
 	HRESULT(LoadFromWICFile(L"img/001.webp", WIC_FLAGS_NONE, &metadate, scratchImg));	//C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\img
@@ -266,27 +266,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//グラフィックパイプラインステート作成--------------
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {};
 	ID3D12RootSignature* rootsignature; {
-		D3D12_ROOT_PARAMETER rootparam[2] = {};
+		D3D12_ROOT_PARAMETER rootparam = {};
 		D3D12_DESCRIPTOR_RANGE descTblRange[2] = {};
 		descTblRange[0].NumDescriptors = 1;
 		descTblRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//種別はテクスチャ
 		descTblRange[0].BaseShaderRegister = 0;
 		descTblRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		rootparam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		rootparam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
-		rootparam[0].DescriptorTable.pDescriptorRanges = &descTblRange[0];
-		rootparam[0].DescriptorTable.NumDescriptorRanges = 1;
 		descTblRange[1].NumDescriptors = 1;
 		descTblRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	//種別は定数
 		descTblRange[1].BaseShaderRegister = 0;
 		descTblRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		rootparam[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		rootparam[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-		rootparam[1].DescriptorTable.pDescriptorRanges = &descTblRange[1];
-		rootparam[1].DescriptorTable.NumDescriptorRanges = 1;
+		rootparam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootparam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		rootparam.DescriptorTable.pDescriptorRanges = descTblRange;
+		rootparam.DescriptorTable.NumDescriptorRanges = 2;
 		D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {}; {
-			rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; rootSignatureDesc.pParameters = rootparam;
-			rootSignatureDesc.NumParameters = 2; rootSignatureDesc.NumStaticSamplers = 1;
+			rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; rootSignatureDesc.pParameters = &rootparam;
+			rootSignatureDesc.NumParameters = 1; rootSignatureDesc.NumStaticSamplers = 1;
 		}
 		D3D12_STATIC_SAMPLER_DESC samplerDesc = {}; {
 			samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP; samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP; samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
