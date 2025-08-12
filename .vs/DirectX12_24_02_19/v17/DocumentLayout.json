@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{C3A3F7D6-F6BD-44F0-BCC7-521804303FE6}|DirectX12_24_02_19\\DirectX12_24_02_19.vcxproj|solutionrelative:DirectX12_24_02_19\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "main.cpp",
+              "DocumentMoniker": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\main.cpp",
+              "RelativeDocumentMoniker": "DirectX12_24_02_19\\main.cpp",
+              "ToolTip": "C:\\Users\\syuugo_main\\source\\repos\\DirectX12_24_02_19\\DirectX12_24_02_19\\main.cpp*",
+              "RelativeToolTip": "DirectX12_24_02_19\\main.cpp*",
+              "ViewState": "AQIAAIQAAAAAAAAAAADwv6EAAAAUAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-08-12T02:04:33.586Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

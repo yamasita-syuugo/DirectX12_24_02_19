@@ -159,7 +159,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char signature[3] = {};
 	PMDHeader pmdHeader;
 	FILE *fp;
-	fopen_s(&fp,"Model/Model/初音ミクmetal.pmd", "rb");
+	fopen_s(&fp,"Model/初音ミクmetal.pmd", "rb");
 	fread(signature, sizeof(signature), 1, fp);
 	fread(&pmdHeader, sizeof(pmdHeader), 1, fp);
 	unsigned int vertNum;
