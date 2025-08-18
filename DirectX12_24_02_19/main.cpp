@@ -156,89 +156,73 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//	unsigned char edge_flag; //エッジフラグ
 	//	unsigned long face_vert_count; //面頂点数
 	//	char texture_file_name[20]; //テクスチャファイル名
-	char signature[3] = {};
-	PMDHeader pmdHeader;
-	FILE *fp;
-	fopen_s(&fp,"Model/初音ミクmetal.pmd", "rb");
-	fread(signature, sizeof(signature), 1, fp);
-	fread(&pmdHeader, sizeof(pmdHeader), 1, fp);
-	unsigned int vertNum;
-	fread(&vertNum, sizeof(vertNum), 1, fp);
-	constexpr size_t pmdvertex_size = 38;
-	vector<PMDVertex> vertices(vertNum);
-	for (int i = 0; i < vertNum; i++)fread(&vertices[i], pmdvertex_size, 1, fp);
+	PMDHeader pmdHeader; 
+	vector<PMDVertex> vertices;
+	vector<unsigned short> indices; {
+		FILE* fp;
+		fopen_s(&fp, "Model/初音ミク.pmd", "rb");
+		char signature[3] = {};
+		fread(signature, sizeof(signature), 1, fp);
+		fread(&pmdHeader, sizeof(pmdHeader), 1, fp);
+		unsigned int vertNum;
+		fread(&vertNum, sizeof(vertNum), 1, fp);
+		vertices.resize(vertNum);
+		constexpr size_t pmdvertex_size = 38;
+		for (int i = 0; i < vertNum; i++)fread(&vertices[i], pmdvertex_size, 1, fp);
+		unsigned int indicesNum;//インデックス数
+		fread(&indicesNum, sizeof(indicesNum), 1, fp);
+		indices.resize(indicesNum);
+		fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
+		fclose(fp);
+	}
 
-	//unsigned int indicesNum;//インデックス数
-	//fread(&indicesNum, sizeof(indicesNum), 1, fp);
-	//vector<unsigned short> indices(indicesNum);
-	//fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
-	fclose(fp);
 
-
-	//座標計算----------------------------------------------
-	//Vertex vertices[] = {
-	//	{{-1.0f,-1.0f,0.0f},{0.0f,1.0f}},
-	//	{{-1.0f,1.0f,0.0f},	{0.0f,0.0f}},
-	//	{{1.0f,-1.0f,0.0f},{1.0f,1.0f}},
-	//	{{1.0f,1.0f,0.0f},	{1.0f,0.0f}},
-
-	//	{{100.0f,200.0f,0.0f},{0.0f,1.0f}},
-	//	{{100.0f,100.0f,0.0f},	{0.0f,0.0f}},
-	//	{{200.0f,200.0f,0.0f},{1.0f,1.0f}},
-	//	{{200.0f,100.0f,0.0f},	{1.0f,0.0f}},
-
-	//};
-	//インデックスの実装------------------------------------
-	unsigned short indices[] = {
-		1,0,2,
-		2,1,3,
-
-		4,5,6,
-		6,5,7,
-	};
 	TexMetadata metadate = {};
 	ScratchImage scratchImg = {};
 	HRESULT(LoadFromWICFile(L"img/ダウンロード.jfif", WIC_FLAGS_NONE, &metadate, scratchImg));	//C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\img
 	vector<Image> img;
 	img.push_back(*scratchImg.GetImage(0, 0, 0));
 
-	D3D12_RESOURCE_DESC resDescBuf = {}; {
-		resDescBuf.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER; resDescBuf.Width = sizeof(vertices); resDescBuf.Height = 1; resDescBuf.DepthOrArraySize = 1; resDescBuf.MipLevels = 1;
-		resDescBuf.Format = DXGI_FORMAT_UNKNOWN; resDescBuf.SampleDesc.Count = 1; resDescBuf.Flags = D3D12_RESOURCE_FLAG_NONE; resDescBuf.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	}
 
-	//頂点バッファー作成--------------------------------
-	ID3D12Resource* vertBuff = nullptr;
-	ID3D12Resource* idxBuff = nullptr; {
-		D3D12_HEAP_PROPERTIES heapprop = {}; heapprop.Type = D3D12_HEAP_TYPE_UPLOAD; heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN; heapprop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-		HRESULT(_dev->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resDescBuf, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertBuff)));
-		HRESULT(_dev->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resDescBuf, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&idxBuff)));
-	}
 	//頂点情報コピー------------------------------------
 	//vertices----------------------
 	D3D12_VERTEX_BUFFER_VIEW vbView = {}; {
+		//頂点バッファー作成--------------------------------
+		ID3D12Resource* vertBuff = nullptr; {
+			D3D12_HEAP_PROPERTIES heapprop = {}; heapprop.Type = D3D12_HEAP_TYPE_UPLOAD; heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN; heapprop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+			D3D12_RESOURCE_DESC resDescBuf = {}; {
+				resDescBuf.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER; resDescBuf.Width = vertices.size() * sizeof(vertices[0]); resDescBuf.Height = 1; resDescBuf.DepthOrArraySize = 1; resDescBuf.MipLevels = 1;
+				resDescBuf.Format = DXGI_FORMAT_UNKNOWN; resDescBuf.SampleDesc.Count = 1; resDescBuf.Flags = D3D12_RESOURCE_FLAG_NONE; resDescBuf.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+			}
+			HRESULT(_dev->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resDescBuf, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertBuff)));
+		}
 		PMDVertex* vertMap = nullptr;
-		HRESULT(vertBuff->Map(0, nullptr, reinterpret_cast<void**>(& vertMap)));
-		PMDVertex tmp[15000];
-		for (int i = 0; i < vertNum; i++)tmp[i] = vertices[i];
-		//memcpy(vertMap, tmp, vertices.size());
-		copy(&vertices[0], &vertices[204], vertMap);
+		HRESULT(vertBuff->Map(0, nullptr, (void**)&vertMap));
+		copy(vertices.begin(), vertices.end(), vertMap);//配列205以上でエラー→バッファーのDescのwidthが小さかった(32だった)
 		vertBuff->Unmap(0, nullptr);
 		vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
-		vbView.SizeInBytes = vertices.size();
-		vbView.StrideInBytes = pmdvertex_size;
-		_cmdList->IASetVertexBuffers(0, 1, &vbView);
+		vbView.SizeInBytes = vertices.size() * sizeof(PMDVertex);
+		vbView.StrideInBytes = sizeof(PMDVertex);
+		//_cmdList->IASetVertexBuffers(0, 1, &vbView);//ループ内で使用
 	}
 	//indices-----------------------
-	D3D12_INDEX_BUFFER_VIEW ibView = {};  {
+	D3D12_INDEX_BUFFER_VIEW ibView = {}; {
+		ID3D12Resource* idxBuff = nullptr; {
+			D3D12_HEAP_PROPERTIES heapprop = {}; heapprop.Type = D3D12_HEAP_TYPE_UPLOAD; heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN; heapprop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+			D3D12_RESOURCE_DESC resDescBuf = {}; {
+				resDescBuf.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER; resDescBuf.Width = sizeof(indices[0]) * indices.size(); resDescBuf.Height = 1; resDescBuf.DepthOrArraySize = 1; resDescBuf.MipLevels = 1;
+				resDescBuf.Format = DXGI_FORMAT_UNKNOWN; resDescBuf.SampleDesc.Count = 1; resDescBuf.Flags = D3D12_RESOURCE_FLAG_NONE; resDescBuf.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+			}
+			HRESULT(_dev->CreateCommittedResource(&heapprop, D3D12_HEAP_FLAG_NONE, &resDescBuf, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&idxBuff)));
+		}
 		unsigned short* mappedIdx = nullptr;
 		HRESULT(idxBuff->Map(0, nullptr, (void**)&mappedIdx));
-		copy(/*&*/indices/*[0]*/, /*&*/end(indices)/*[2048]*/, mappedIdx);
+		copy(begin(indices), end(indices), mappedIdx);
 		idxBuff->Unmap(0, nullptr);
 		ibView.BufferLocation = idxBuff->GetGPUVirtualAddress();
-		ibView.SizeInBytes = sizeof(indices);
+		ibView.SizeInBytes = indices.size() * sizeof(unsigned short);
 		ibView.Format = DXGI_FORMAT_R16_UINT;
-		_cmdList->IASetIndexBuffer(&ibView);
+		//_cmdList->IASetIndexBuffer(&ibView);//ループ内で使用
 	}
 
 	//テクスチャバッファー作成--------------------------
@@ -266,14 +250,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 	//定数バッファー作成 : 座標定数
 	ID3D12Resource* constBuff = nullptr; 
-	XMMATRIX worldMat,viewMat,projMat;
-	XMMATRIX* mapMatrix; {
+	XMMATRIX* mapMatrix; 
+	XMMATRIX worldMat, viewMat, projMat; {
 		auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(XMMATRIX) + 0xff) & ~0xff);
 
 		//XMMATRIX matrix = XMMatrixIdentity();
 		worldMat = XMMatrixIdentity();
-		XMFLOAT3 eye(0, 0, -10);XMFLOAT3 target(0, 0, 0);XMFLOAT3 up(0, 1, 0);
+		XMFLOAT3 eye(0, 10, -15), target(0.0f, 10.0f, 0.0f), up(0.0f, 1.0f, 0.0f);
 		viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
 		projMat = XMMatrixPerspectiveFovLH(
 			XM_PIDIV2, static_cast<float>(WINDOW_WIDTH) / static_cast<float>(WINDOW_HEIGHT), 1.0f, 100.0f);
@@ -405,7 +389,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 
 	ComPtr<ID3D12PipelineState> _pipelinestate = nullptr; {
-		HRESULT(_dev->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipelinestate.GetAddressOf())));	//todo:E_INVALIDARG
+		HRESULT(_dev->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipelinestate.GetAddressOf())));	//todo:E_INVALIDARG→
 	}
 
 	//ビューポート&シザー短形作成----------------------
@@ -420,11 +404,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//ループ作成--------------------------------------------------------------------------
 	MSG msg = {};
 	float angle = 0;
+	bool tmp = false;
 	while (true) {
-		angle += 0.1f;
-		worldMat = XMMatrixScaling(sin(angle),sin(angle),sin(angle));
-		*mapMatrix = worldMat * viewMat * projMat;
 
+		angle += 0.1f;
+		XMFLOAT3 eye(cos(angle), sin(angle) + 10, -15); XMFLOAT3 target(0.0f, 10.0f, 0.0f); XMFLOAT3 up(0, 1, 0);
+		viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+		*mapMatrix = worldMat * viewMat * projMat;
+		mapMatrix;
 
 		//ループ内処理--------------------------------------------------------------------
 		//レンダーターゲットの設定--------------------------86
@@ -447,11 +434,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			_cmdList->SetGraphicsRootDescriptorTable(/*1*/0, heapHandle);
 		}
 
-		_cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		if (tmp)_cmdList->IASetPrimitiveTopology(/*D3D_PRIMITIVE_TOPOLOGY_POINTLIST*/D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);//頂点データの解釈
+		//if(!tmp)_cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_POINTLIST/*D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST*/);//頂点データの解釈
+		tmp = !tmp;
+
 		_cmdList->IASetVertexBuffers(0, 1, &vbView);//毎フレームセットしないといけない
 		_cmdList->IASetIndexBuffer(&ibView);//毎フレームセットしないといけない
 
-		_cmdList->DrawIndexedInstanced(vertNum/*頂点数*/, 1, 0, 0, 0);
+		_cmdList->DrawIndexedInstanced(vertices.size() * sizeof(vertices)/*頂点データサイズ*/, 1, 0, 0, 0);
 
 
 
