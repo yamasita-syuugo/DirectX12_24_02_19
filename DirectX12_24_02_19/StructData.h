@@ -28,3 +28,44 @@ struct PMDVertex
 	uint8_t ebgeFlg;
 	uint16_t dummy;
 };
+#pragma pack(1)
+struct PMDMaterial
+{
+	XMFLOAT3 diffuse;
+	float alpha;
+	float specularity;
+	XMFLOAT3 specular;
+	XMFLOAT3 ambient;
+	unsigned char toonIdx;
+	unsigned char edgeFlg;
+
+	unsigned int indicesNum;
+	char texFilePath[20];
+};
+#pragma pack()
+struct MaterialForHlsl
+{
+	XMFLOAT3 diffuse;
+	float alpha;
+	XMFLOAT3 specular;
+	float specularity;
+	XMFLOAT3 ambient;
+};
+struct AdditionalMaterial
+{
+	string texPath;
+	int toonIdx;
+	bool edgeFlg;
+};
+struct Material
+{
+	unsigned int indicesNum;
+	MaterialForHlsl material;
+	AdditionalMaterial additional;
+};
+
+struct MatricexsData
+{
+	XMMATRIX world;
+	XMMATRIX viewproj;
+};
