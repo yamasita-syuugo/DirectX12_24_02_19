@@ -22,13 +22,16 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 HRESULT result;
 #define HRESULT(function) result = function;if(result != S_OK){ cout << hex/*16進数*/ << result << endl; getchar(); return 1;}
 
-
+//モデルのパスとテクスチャのパスから合成パスを得る
+string GetTexturePathFromModelAndTexPath(const string& modelTath, const char* texPath);
+//stringからwstringを得る
+wstring GetWideStringFromString(const string& str);
 
 
 #ifdef _DEBUG
 int main() {
 #else
-int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 #endif // _DEBUG
 
 	//window生成-------------------------------------------------------------------------
@@ -262,19 +265,43 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		_dev->CreateDepthStencilView(depthBuffer, &dsvDesc, dsvHeap->GetCPUDescriptorHandleForHeapStart());
 	}
-	 {
-		auto materialBuffSize = sizeof(MaterialForHlsl);
-		materialBuffSize = (materialBuffSize * 0xff) & ~0xff;
-		ID3D12Resource* materialBuff = nullptr;
-		HRESULT(_dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(materialBuffSize* materials.size()),D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&materialBuff)));
-		char* mapMaterial = nullptr;
-		HRESULT(materialBuff->Map(0, nullptr, (void**)&mapMaterial));
-		for (auto& m : materials) {
-			*((MaterialForHlsl*)mapMaterial) = m.material;
-			mapMaterial += materialBuffSize;
+	ID3D12DescriptorHeap* materialDescHeap = nullptr; {
+		{
+			D3D12_DESCRIPTOR_HEAP_DESC matDescHeapDesc = {};
+			matDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+			matDescHeapDesc.NodeMask = 0;
+			matDescHeapDesc.NumDescriptors = materials.size();
+			matDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+			HRESULT(_dev->CreateDescriptorHeap(&matDescHeapDesc, IID_PPV_ARGS(&materialDescHeap)));
 		}
-		materialBuff->Unmap(0, nullptr);
+		auto materialBuffSize = sizeof(MaterialForHlsl);
+		materialBuffSize = (materialBuffSize + 0xff) & ~0xff;
+		ID3D12Resource* materialBuff = nullptr; {
+			auto heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+			auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(materialBuffSize * materials.size());
+			HRESULT(_dev->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&materialBuff)));
+		}
+		{
+			char* mapMaterial = nullptr;
+			MaterialForHlslDummy* tmpMat = nullptr;
+			HRESULT(materialBuff->Map(0, nullptr, (void**)&mapMaterial));
+			tmpMat = (MaterialForHlslDummy*)mapMaterial;
+			for (auto& m : materials) {
+				*((MaterialForHlsl*)mapMaterial) = m.material; mapMaterial += materialBuffSize; }
+			vector<MaterialForHlslDummy> tmp(materialBuffSize);
+			for(int i  = 0;i< materialBuffSize;i++)tmp[i] = tmpMat[i];
+			materialBuff->Unmap(0, nullptr);
+		}
+		D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {}; {
+			matCBVDesc.BufferLocation = materialBuff->GetGPUVirtualAddress();
+			matCBVDesc.SizeInBytes = materialBuffSize;
+		}
+		auto matDescHeapH = materialDescHeap->GetCPUDescriptorHandleForHeapStart();
+		for (int i = 0; i < materials.size(); i++) {
+			_dev->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
+			matDescHeapH.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+			matCBVDesc.BufferLocation += materialBuffSize;
+		}
 	}
 
 	MatricexsData* mapMatrix; 
@@ -347,105 +374,123 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//HRESULT(_dev->GetDeviceRemovedReason());//エラーチェック用->CreateConstantBufferViewを動かすと停止する->原因はCreateCommittedResourceの第3引数
 	}
 
-	//shader作成----------------------------------------
-	ComPtr<ID3DBlob> vsBlob = nullptr;
-	ComPtr<ID3DBlob> psBlob = nullptr; {
-		ComPtr<ID3DBlob> errorBlob = nullptr;
-		HRESULT(D3DCompileFromFile(L"BasicVertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicVS", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, vsBlob.GetAddressOf(), errorBlob.GetAddressOf()));
-		HRESULT(D3DCompileFromFile(L"BasicPixelShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicPS", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, psBlob.GetAddressOf(), errorBlob.GetAddressOf()));
-#if 0//エラーが出た時の確認用
-		string errstr;
-		errstr.resize(errorBlob->GetBufferSize());
-		copy_n((char*)errorBlob->GetBufferPointer(), errorBlob->GetBufferSize(), errstr.begin());
-		OutputDebugStringA(errstr.c_str());
-#endif // 0
-	}
-	//グラフィックパイプラインステート作成--------------
-	ComPtr<ID3D12PipelineState> _pipelinestate = nullptr;
+	//グラフィックパイプラインステート作成--------------:シェーダー情報や頂点情報
+	ComPtr<ID3D12PipelineState> _pipelineState = nullptr;
 	ID3D12RootSignature* rootsignature; {
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {};
-		D3D12_DESCRIPTOR_RANGE descTblRange[2] = {};
-		descTblRange[0].NumDescriptors = 1;
-		descTblRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//種別はテクスチャ
-		descTblRange[0].BaseShaderRegister = 0;
-		descTblRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		descTblRange[1].NumDescriptors = 1;
-		descTblRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	//種別は定数
-		descTblRange[1].BaseShaderRegister = 0;
-		descTblRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-		ComPtr<ID3DBlob> rootSigBlob = nullptr; {
-			D3D12_ROOT_PARAMETER rootparam = {}; {
-				rootparam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-				rootparam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-				rootparam.DescriptorTable.pDescriptorRanges = descTblRange;
-				rootparam.DescriptorTable.NumDescriptorRanges = 2;
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {}; {
+			{
+				D3D12_DESCRIPTOR_RANGE descTblRange[4] = {}; {
+					descTblRange[0].NumDescriptors = 1;
+					descTblRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	//種別は定数
+					descTblRange[0].BaseShaderRegister = 0;
+					descTblRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+					descTblRange[1].NumDescriptors = 1;
+					descTblRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//種別はテクスチャ
+					descTblRange[1].BaseShaderRegister = 0;
+					descTblRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+					descTblRange[2].NumDescriptors = 1;
+					descTblRange[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	//種別は定数
+					descTblRange[2].BaseShaderRegister = 1;
+					descTblRange[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+					descTblRange[3].NumDescriptors = 1;
+					descTblRange[3].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//種別はテクスチャ
+					descTblRange[3].BaseShaderRegister = 1;
+					descTblRange[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+				}
+				D3D12_ROOT_PARAMETER rootparam[2] = {}; {
+					rootparam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+					rootparam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+					rootparam[0].DescriptorTable.pDescriptorRanges = &descTblRange[0];
+					rootparam[0].DescriptorTable.NumDescriptorRanges = 2;
+					rootparam[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+					rootparam[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+					rootparam[1].DescriptorTable.pDescriptorRanges = &descTblRange[2];
+					rootparam[1].DescriptorTable.NumDescriptorRanges = 2;
+				}
+				ComPtr<ID3DBlob> rootSigBlob = nullptr; {
+					D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {}; {
+						rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; rootSignatureDesc.pParameters = rootparam;
+						rootSignatureDesc.NumParameters = 2; rootSignatureDesc.NumStaticSamplers = 1;
+						D3D12_STATIC_SAMPLER_DESC samplerDesc = {}; {
+							samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP; samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP; samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+							samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK; samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR; samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+							samplerDesc.MinLOD = 0.0f; samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+							rootSignatureDesc.pStaticSamplers = &samplerDesc;
+						}
+						ComPtr<ID3DBlob> errorBlob = nullptr;
+						HRESULT(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob));
+					}
+				}
+				HRESULT(_dev->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(&rootsignature)));
+				gpipeline.pRootSignature = rootsignature;
 			}
-			D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {}; {
-				rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT; rootSignatureDesc.pParameters = &rootparam;
-				rootSignatureDesc.NumParameters = 1; rootSignatureDesc.NumStaticSamplers = 1;
+			//rootSigBlob->Release();
+			//shader作成----------------------------------------
+			ComPtr<ID3DBlob> vsBlob = nullptr;
+			ComPtr<ID3DBlob> psBlob = nullptr; {
+				ComPtr<ID3DBlob> errorBlob = nullptr;
+				HRESULT(D3DCompileFromFile(L"BasicVertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicVS", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, vsBlob.GetAddressOf(), errorBlob.GetAddressOf()));
+				HRESULT(D3DCompileFromFile(L"BasicPixelShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicPS", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, psBlob.GetAddressOf(), errorBlob.GetAddressOf()));
+#if 0//エラーが出た時の確認用
+				string errstr;
+				errstr.resize(errorBlob->GetBufferSize());
+				copy_n((char*)errorBlob->GetBufferPointer(), errorBlob->GetBufferSize(), errstr.begin());
+				OutputDebugStringA(errstr.c_str());
+#endif // 0
+				gpipeline.VS.pShaderBytecode = vsBlob->GetBufferPointer();
+				gpipeline.VS.BytecodeLength = vsBlob->GetBufferSize();
+				gpipeline.PS.pShaderBytecode = psBlob->GetBufferPointer();
+				gpipeline.PS.BytecodeLength = psBlob->GetBufferSize();
 			}
-			D3D12_STATIC_SAMPLER_DESC samplerDesc = {}; {
-				samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP; samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP; samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-				samplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK; samplerDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR; samplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
-				samplerDesc.MinLOD = 0.0f; samplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL; samplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-				rootSignatureDesc.pStaticSamplers = &samplerDesc;
-			}
-			ComPtr<ID3DBlob> errorBlob = nullptr;
-			HRESULT(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob));
-			HRESULT(_dev->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(&rootsignature)));
-		}
-		gpipeline.pRootSignature = rootsignature;
-		//rootSigBlob->Release();
-		gpipeline.VS.pShaderBytecode = vsBlob->GetBufferPointer();
-		gpipeline.VS.BytecodeLength = vsBlob->GetBufferSize();
-		gpipeline.PS.pShaderBytecode = psBlob->GetBufferPointer();
-		gpipeline.PS.BytecodeLength = psBlob->GetBufferSize();
-		gpipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
-		gpipeline.RasterizerState.MultisampleEnable = false;
-		gpipeline.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-		gpipeline.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-		gpipeline.RasterizerState.DepthClipEnable = true;
-		gpipeline.BlendState.AlphaToCoverageEnable = false;
-		gpipeline.BlendState.IndependentBlendEnable = false;
-		D3D12_RENDER_TARGET_BLEND_DESC renderTargetBlendDesc = {}; {
-			renderTargetBlendDesc.BlendEnable = false;
-			renderTargetBlendDesc.LogicOpEnable = false;
-			renderTargetBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-		}gpipeline.BlendState.RenderTarget[0] = renderTargetBlendDesc;
-		D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-			{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
-			{"NORMAL",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
-			{"TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
-			{"BONE_NO",0,DXGI_FORMAT_R16G16_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
-			{"WEIGHT",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
-			//{"EDGE_FLG",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
-		};/*D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-			{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
-			{"TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
-		};*/
-		gpipeline.InputLayout.pInputElementDescs = inputLayout;
-		gpipeline.InputLayout.NumElements = _countof(inputLayout);
-		gpipeline.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
-		gpipeline.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		gpipeline.NumRenderTargets = 1;
-		gpipeline.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-		gpipeline.SampleDesc.Count = 1;
-		gpipeline.SampleDesc.Quality = 0;
+			gpipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+			gpipeline.RasterizerState.MultisampleEnable = false;
+			gpipeline.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+			gpipeline.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+			gpipeline.RasterizerState.DepthClipEnable = true;
+			gpipeline.BlendState.AlphaToCoverageEnable = false;
+			gpipeline.BlendState.IndependentBlendEnable = false;
 
-		gpipeline.DepthStencilState.DepthEnable = true;
-		gpipeline.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-		gpipeline.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-		gpipeline.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+			D3D12_RENDER_TARGET_BLEND_DESC renderTargetBlendDesc = {}; {
+				renderTargetBlendDesc.BlendEnable = false;
+				renderTargetBlendDesc.LogicOpEnable = false;
+				renderTargetBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+				gpipeline.BlendState.RenderTarget[0] = renderTargetBlendDesc;
+			}
+			D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+				{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+				{"NORMAL",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+				{"TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+				{"BONE_NO",0,DXGI_FORMAT_R16G16_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+				{"WEIGHT",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+				//{"EDGE_FLG",0,DXGI_FORMAT_R8_UINT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+			};/*D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+				{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+				{"TEXCOORD",0,DXGI_FORMAT_R32G32_FLOAT,0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+			};*/
+			gpipeline.InputLayout.pInputElementDescs = inputLayout;
+			gpipeline.InputLayout.NumElements = _countof(inputLayout);
 
-		gpipeline.RasterizerState.FrontCounterClockwise = false;
-		gpipeline.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-		gpipeline.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-		gpipeline.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
-		gpipeline.RasterizerState.AntialiasedLineEnable = false;
-		gpipeline.RasterizerState.ForcedSampleCount = 0;
-		gpipeline.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-		{
-			HRESULT(_dev->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipelinestate.GetAddressOf())));
+			gpipeline.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
+			gpipeline.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+			gpipeline.NumRenderTargets = 1;
+			gpipeline.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+			gpipeline.SampleDesc.Count = 1;
+			gpipeline.SampleDesc.Quality = 0;
+
+			gpipeline.DepthStencilState.DepthEnable = true;
+			gpipeline.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+			gpipeline.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+			gpipeline.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+
+			gpipeline.RasterizerState.FrontCounterClockwise = false;
+			gpipeline.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+			gpipeline.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+			gpipeline.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+			gpipeline.RasterizerState.AntialiasedLineEnable = false;
+			gpipeline.RasterizerState.ForcedSampleCount = 0;
+			gpipeline.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+			HRESULT(_dev->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipelineState.GetAddressOf())));
 		}
 	}
 
@@ -457,11 +502,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		scissorrect.top = 0; scissorrect.left = 0; scissorrect.right = scissorrect.left + WINDOW_WIDTH; scissorrect.bottom = scissorrect.top + WINDOW_HEIGHT;
 	}
 
-
+	DirectInput keyboard(hIns);
 	//ループ作成--------------------------------------------------------------------------
 	MSG msg = {};
 	float angle = 0;
+	int control = 0;
 	while (true) {
+		keyboard.Execute();
 
 		angle += 0.1f;
 		XMFLOAT3 eye(cos(angle), sin(angle) + 10, -10); XMFLOAT3 target(0.0f, 10.0f, 0.0f); XMFLOAT3 up(0, 1, 0);
@@ -470,30 +517,48 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		mapMatrix->world = worldMat;
 		mapMatrix->viewproj = viewMat * projMat;
 
+		control = 1;
+
 		//レンダーターゲットの設定--------------------------86
 		{
-			auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart(); {
-				auto bbIdx = _swapchain->GetCurrentBackBufferIndex();
-				rtvH.ptr += bbIdx * _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+			{//描画範囲の指定？
+				auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart(); {
+					auto bbIdx = _swapchain->GetCurrentBackBufferIndex();
+					rtvH.ptr += bbIdx * _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+				}
+				auto dsvH = dsvHeap->GetCPUDescriptorHandleForHeapStart();
+				_cmdList->OMSetRenderTargets(1, &rtvH, false,/*nullptr*/ &dsvH);
+				//depthハンドルを入れるとオブジェクトが消える->ClearDepthStencilView第三引数が1000で解決:0.0f～1.0fに正規化出来てない->ビューポートのMaxDepthが200だった
+				float clearColor[] = { 0.0f,1.0f,1.0f,1.0f, };
+				_cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);//ウィンドウを塗りつぶす->描画命令後だと描画を塗りつぶす
+				_cmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 			}
-			auto dsvH = dsvHeap->GetCPUDescriptorHandleForHeapStart();
-			_cmdList->OMSetRenderTargets(1, &rtvH, false,/*nullptr*/ &dsvH);
-			//depthハンドルを入れるとオブジェクトが消える->ClearDepthStencilView第三引数が1000で解決:0.0f～1.0fに正規化出来てない->ビューポートのMaxDepthが200だった
-			float clearColor[] = { 0.0f,1.0f,1.0f,1.0f, };
-			_cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);//ウィンドウを塗りつぶす->描画命令後だと描画を塗りつぶす
-			_cmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 			//描画命令------------------------------------------
-			_cmdList->SetPipelineState(_pipelinestate.Get());
-			_cmdList->SetDescriptorHeaps(1, &basicDescHeap);
 			_cmdList->RSSetViewports(1, &viewport);
 			_cmdList->RSSetScissorRects(1, &scissorrect);
 
+			_cmdList->SetPipelineState(_pipelineState.Get());
+
 			_cmdList->SetGraphicsRootSignature(rootsignature);//SetGraphicsRootDescriptorTableより前に書く
 			{
-				auto heapHandle = basicDescHeap->GetGPUDescriptorHandleForHeapStart();//参考書との相違点->リソースと定数、どちらのバッファービューを先に入れるか次第
-				//heapHandle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+				_cmdList->SetDescriptorHeaps(1, &basicDescHeap);
+				auto heapHandle = basicDescHeap/*materialDescHeap*/->GetGPUDescriptorHandleForHeapStart();//参考書との相違点->リソースと定数、どちらのバッファービューを先に入れるか次第
+				heapHandle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 				_cmdList->SetGraphicsRootDescriptorTable(/*1*/0, heapHandle);
+
+				_cmdList->SetDescriptorHeaps(1, &materialDescHeap);
+
+				auto materialH = materialDescHeap->GetGPUDescriptorHandleForHeapStart();
+				unsigned int idxOffset = 0;
+
+				auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 5;
+				for (auto& m : materials) {
+					_cmdList->SetGraphicsRootDescriptorTable(1, materialH);
+					materialH.ptr += 0;//0～19で色が変わる(水色、青、紺、薄い黄、白)それ以外で真っ黒→31白
+					_cmdList->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
+					idxOffset += m.indicesNum;
+				}
 			}
 
 			_cmdList->IASetPrimitiveTopology(/*D3D_PRIMITIVE_TOPOLOGY_POINTLIST*/D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);//頂点データの解釈
@@ -534,4 +599,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		getchar();
 		return 0;
 	}
+}
+
+string GetTexturePathFromModelAndTexPath(const string& modelPath, const char* texPath) {
+	auto folderPath = modelPath.substr(0, modelPath.rfind('/'));
+	return folderPath + texPath;
+}
+wstring GetWideStringFromString(const string& str) {
+	//呼び出し1回目(文字列数を得る)
+	auto num1 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, nullptr, 0);
+	wstring wstr;
+	wstr.resize(num1);
+
+	//呼び出し2回目(確保済みのwstrに変換文字列をコピー)
+	auto num2 = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, str.c_str(), -1, &wstr[0], num1);
+	assert(num1 == num2);
+	return wstr;
 }

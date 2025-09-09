@@ -23,4 +23,4 @@ using namespace DirectX;
 
 #include"StructData.h"
 
-#include"GameObject.h"
+#include "KeyboardState.h"//’†‚É<dinput.h>
