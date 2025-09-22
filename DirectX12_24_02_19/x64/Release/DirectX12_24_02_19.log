@@ -1,7 +1,20 @@
-﻿  KeyboardState.cpp
+﻿  main.cpp
   C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(107,26): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(164,21): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(175,21): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(212,40): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(231,39): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(269,51): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(293,29): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(312,30): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(313,40): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(316,33): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(328,4): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(368,151): warning C4244: '=': 'UINT64' から 'UINT' への変換です。データが失われる可能性があります。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(564,47): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
   コード生成しています。
-  0 of 487 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+  1 of 489 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   コード生成が終了しました。

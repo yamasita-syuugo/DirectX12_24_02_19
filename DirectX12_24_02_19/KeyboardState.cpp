@@ -5,32 +5,33 @@ LPDIRECTINPUTDEVICE8 DirectInput::DIKeyboard = NULL;
 BYTE DirectInput::DIKBState[256] = {};
 BYTE DirectInput::DIKBOldState[256] = {};
 
-extern const DIDATAFORMAT c_dfDIKeyboard = {};
-extern const GUID GUID_SysKeyboard = {};
-extern const GUID IID_IDirectInput8W = {};
-#define WINAPI      __stdcall
-#define REFIID const IID &
-extern HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID* ppvOut, LPUNKNOWN punkOuter);
 
-DirectInput::DirectInput(HINSTANCE hinst)
+DirectInput::DirectInput(HINSTANCE hinst, HWND hWnd)
 {
-	//DirectInput8Create((HINSTANCE)hinst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DIDevicce, NULL);
-	//DIDevicce->CreateDevice(GUID_SysKeyboard, &DIKeyboard, NULL);
-	//DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
+	DirectInput8Create((HINSTANCE)hinst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DIDevicce, NULL);
+	DIDevicce->EnumDevices(DI8DEVTYPE_KEYBOARD, nullptr, nullptr, DIEDFL_ATTACHEDONLY);
+	DIDevicce->CreateDevice(GUID_SysKeyboard, &DIKeyboard, NULL);
+	DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
+	DIKeyboard->SetCooperativeLevel(hWnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 }
 
 DirectInput::~DirectInput()
 {
 }
 
-bool DirectInput::GetKBState()
+BYTE* DirectInput::GetKBState()
 {
-	return false;
+	return DIKBState;
+}
+BYTE* DirectInput::GetOldKBState()
+{
+	return DIKBOldState;
 }
 
 
 
-void DirectInput::Execute() {
-	//memcpy(DIKBOldState,DIKBState,sizeof(BYTE) * 256);
-	//DIKeyboard->GetDeviceState(256, DIKBState);
+void DirectInput::Execute(HWND hWnd) {
+	//DIDevicce->RunControlPanel(hWnd);
+	memcpy(DIKBOldState,DIKBState,sizeof(BYTE) * 256);
+	DIKeyboard->GetDeviceState(256, DIKBState);
 }

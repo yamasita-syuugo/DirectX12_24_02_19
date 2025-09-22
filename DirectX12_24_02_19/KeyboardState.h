@@ -12,14 +12,15 @@ static BYTE DIKBOldState[256];
 
 
 public:
-	DirectInput(HINSTANCE hinst);
+	DirectInput(HINSTANCE hinst,HWND hWnd);
 	~DirectInput();
 
-	void Execute();
+	void Execute(HWND hWnd);
 
 private:
 
 
 public:
-	bool GetKBState();
+	BYTE* GetKBState();
+	BYTE* GetOldKBState();
 };
