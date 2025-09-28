@@ -51,15 +51,6 @@ struct MaterialForHlsl
 	float specularity;
 	XMFLOAT3 ambient;
 };
-struct MaterialForHlslDummy
-{
-	XMFLOAT3 diffuse;
-	float alpha;
-	XMFLOAT3 specular;
-	float specularity;
-	XMFLOAT3 ambient;
-	float dummy[53];
-};
 struct AdditionalMaterial
 {
 	string texPath;

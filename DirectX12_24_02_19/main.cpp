@@ -53,7 +53,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 		D3D_FEATURE_LEVEL featureLevel;
 		D3D_FEATURE_LEVEL levels[] = {
 			D3D_FEATURE_LEVEL_12_2,D3D_FEATURE_LEVEL_12_1,D3D_FEATURE_LEVEL_12_0,D3D_FEATURE_LEVEL_11_1,D3D_FEATURE_LEVEL_11_0,
-			D3D_FEATURE_LEVEL_10_1,D3D_FEATURE_LEVEL_10_0,D3D_FEATURE_LEVEL_9_3 ,D3D_FEATURE_LEVEL_9_2 ,D3D_FEATURE_LEVEL_9_1 ,
+			/*D3D_FEATURE_LEVEL_10_1,D3D_FEATURE_LEVEL_10_0,D3D_FEATURE_LEVEL_9_3 ,D3D_FEATURE_LEVEL_9_2 ,D3D_FEATURE_LEVEL_9_1 ,*/
 		};
 		for (auto lv : levels)if (D3D12CreateDevice(nullptr, lv, IID_PPV_ARGS(&_dev)) == S_OK) { featureLevel = lv; break; }
 	}
@@ -340,7 +340,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 		_dev->CreateConstantBufferView(&cdvDesc, basicHeapHandle);
 		//HRESULT(_dev->GetDeviceRemovedReason());//エラーチェック用->CreateConstantBufferViewを動かすと停止する->原因はCreateCommittedResourceの第3引数
 	}
-	ID3D12DescriptorHeap* materialDescHeap = nullptr; {
+	ID3D12DescriptorHeap* materialDescHeap = nullptr; {//register(b1)が割り当てられる理由→CommandList->SetGraphicsRootDescriptorTableの第一引数
 		{
 			D3D12_DESCRIPTOR_HEAP_DESC matDescHeapDesc = {};
 			matDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -365,15 +365,11 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 		}
 		{
 			char* mapMaterial = nullptr;
-			MaterialForHlslDummy* tmpMat = nullptr;
 			HRESULT(materialBuff->Map(0, nullptr, (void**)&mapMaterial));
-			tmpMat = (MaterialForHlslDummy*)mapMaterial;
 			for (auto& m : materials) {
 				*((MaterialForHlsl*)mapMaterial) = m.material;
 				mapMaterial += materialBuffSize;
 			}
-			vector<MaterialForHlslDummy> tmp(materialBuffSize);
-			for(int i  = 0;i< materialBuffSize;i++)tmp[i] = tmpMat[i];
 			materialBuff->Unmap(0, nullptr);
 		}
 		D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {}; {
@@ -413,6 +409,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 					descTblRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//種別はテクスチャ
 					descTblRange[1].BaseShaderRegister = 0;
 					descTblRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
 					descTblRange[2].NumDescriptors = 1;
 					descTblRange[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	//種別は定数
 					descTblRange[2].BaseShaderRegister = 1;
@@ -422,7 +419,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 					descTblRange[3].BaseShaderRegister = 1;
 					descTblRange[3].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 				}
-				D3D12_ROOT_PARAMETER rootparam[2] = {}; {
+				D3D12_ROOT_PARAMETER rootparam[2] = {}; {//[0]world,[1]material→違いはBaseShaderRegisterだけ
 					rootparam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 					rootparam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 					rootparam[0].DescriptorTable.pDescriptorRanges = &descTblRange[0];
@@ -450,12 +447,13 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 				gpipeline.pRootSignature = rootsignature;
 			}
 			//rootSigBlob->Release();
-			//shader作成----------------------------------------
-			ComPtr<ID3DBlob> vsBlob = nullptr;
-			ComPtr<ID3DBlob> psBlob = nullptr; {
+			//shader作成---------------------------------------- 
+			{
 				ComPtr<ID3DBlob> errorBlob = nullptr;
-				HRESULT(D3DCompileFromFile(L"BasicVertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicVS", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, vsBlob.GetAddressOf(), errorBlob.GetAddressOf()));
-				HRESULT(D3DCompileFromFile(L"BasicPixelShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicPS", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, psBlob.GetAddressOf(), errorBlob.GetAddressOf()));
+				ID3DBlob* vsBlob = nullptr;
+				HRESULT(D3DCompileFromFile(L"BasicVertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicVS", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &vsBlob, errorBlob.GetAddressOf()));
+				ID3DBlob* psBlob = nullptr;
+				HRESULT(D3DCompileFromFile(L"BasicPixelShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "BasicPS", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &psBlob, errorBlob.GetAddressOf()));
 #if 0//エラーが出た時の確認用
 				string errstr;
 				errstr.resize(errorBlob->GetBufferSize());
@@ -570,30 +568,28 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 			_cmdList->SetPipelineState(_pipelineState.Get());
 
 			_cmdList->SetGraphicsRootSignature(rootsignature);//SetGraphicsRootDescriptorTableより前に書く→ヒープの設定情報？
+
+			_cmdList->IASetPrimitiveTopology(/*D3D_PRIMITIVE_TOPOLOGY_POINTLIST*/D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);//頂点データの解釈
+			_cmdList->IASetVertexBuffers(0, 1, &vbView);//毎フレームセットしないといけない@:
+			_cmdList->IASetIndexBuffer(&ibView);//毎フレームセットしないといけない
 			{
 				_cmdList->SetDescriptorHeaps(1, &basicDescHeap);
 				auto heapHandle = basicDescHeap/*materialDescHeap*/->GetGPUDescriptorHandleForHeapStart();//参考書との相違点->リソースと定数、どちらのバッファービューを先に入れるか次第
 				heapHandle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-				_cmdList->SetGraphicsRootDescriptorTable(/*1*/0, heapHandle);
+				_cmdList->SetGraphicsRootDescriptorTable(0, heapHandle);
 
 				_cmdList->SetDescriptorHeaps(1, &materialDescHeap);
 				auto materialH = materialDescHeap->GetGPUDescriptorHandleForHeapStart();
 				unsigned int idxOffset = 0;
-				auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+				auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)*2;
 				for (auto& m : materials) {
-					_cmdList->SetGraphicsRootDescriptorTable(1, materialH);
+					_cmdList->SetGraphicsRootDescriptorTable(1, materialH);//第一引数(RootParameterIndex)
 					_cmdList->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
-					//int tmp = ((int)angle/3)%33;
-					materialH.ptr += /*tmp*/ cbvsrvIncSize;//0～19で色が変わる(水色、青、紺、薄い黄、白)それ以外で真っ黒→31白
+					materialH.ptr += cbvsrvIncSize;//0～19で色が変わる(水色、青、紺、薄い黄、白)それ以外で真っ黒→31白→関数SetPrimitive,SetVertex,SetIndexを上に移動で色ずれはある物の色分けはできた
 					idxOffset += m.indicesNum;
 				}
 			}
-
-			_cmdList->IASetPrimitiveTopology(/*D3D_PRIMITIVE_TOPOLOGY_POINTLIST*/D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);//頂点データの解釈
-
-			_cmdList->IASetVertexBuffers(0, 1, &vbView);//毎フレームセットしないといけない@:
-			_cmdList->IASetIndexBuffer(&ibView);//毎フレームセットしないといけない
-			_cmdList->DrawIndexedInstanced(indices.size()/*index数*/, 1, 0, 0, 0);
+			//_cmdList->DrawIndexedInstanced(indices.size()/*index数*/, 1, 0, 0, 0);
 
 			HRESULT(_cmdList->Close());
 		}
