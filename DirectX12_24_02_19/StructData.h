@@ -67,5 +67,6 @@ struct Material
 struct MatricexsData
 {
 	XMMATRIX world;
-	XMMATRIX viewproj;
+	XMMATRIX view;
+	XMMATRIX proj;
 };
