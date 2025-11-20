@@ -7,6 +7,9 @@
 using namespace std;
 #include<wrl/client.h>
 using namespace Microsoft::WRL;
+#include<map>
+using namespace std;
+
 
 #include<d3d12.h>
 #include<dxgi1_6.h>

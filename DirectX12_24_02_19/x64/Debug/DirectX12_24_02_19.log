@@ -1,4 +1,24 @@
-﻿C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\BasicPixelShader.hlsl(6,24-48): warning X3206: 'dot': implicit truncation of vector type
-  
-  compilation object save succeeded; see C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\x64\Debug\BasicPixelShader.cso
+﻿  main.cpp
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(113,26): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(175,21): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(186,21): warning C4018: '<': signed と unsigned の数値を比較しようとしました。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(227,41): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(246,40): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(290,30): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(291,40): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(294,33): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(306,4): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(348,151): warning C4244: '=': 'UINT64' から 'UINT' への変換です。データが失われる可能性があります。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(357,54): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(379,29): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(770,29): warning C4267: '=': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(771,39): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(774,32): warning C4267: '=': 'size_t' から 'UINT16' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(782,82): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(782,67): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(802,87): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(820,87): warning C4267: '引数': 'size_t' から 'UINT' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(824,10): warning C4267: '初期化中': 'size_t' から 'int' に変換しました。データが失われているかもしれません。
+C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\DirectX12_24_02_19\main.cpp(828,10): warning C4267: '初期化中': 'size_t' から 'int' に変換しました。データが失われているかもしれません。
   DirectX12_24_02_19.vcxproj -> C:\Users\syuugo_main\source\repos\DirectX12_24_02_19\x64\Debug\DirectX12_24_02_19.exe

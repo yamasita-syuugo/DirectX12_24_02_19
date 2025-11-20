@@ -4,6 +4,7 @@ struct Output
     float4 pos : POSITION;
     float4 normal : NORMAL0;
     float4 vnormal : NORMAL1;
+    float3 ray : VECTOR;
     float2 uv : TEXCOORD;
 };
 
@@ -25,8 +26,8 @@ Texture2D<float4> spa : register(t3);
 cbuffer cbuff0 : register(b0) //定数バッファー
 {
     matrix world; //ワールド変換行列
-    matrix view; //ヴュー行列
-    matrix proj; //プロジェクション行列
+    matrix view; matrix proj;//ビュープロジェクション行列
+    float3 eye;
 };
 cbuffer Material : register(b1)
 {

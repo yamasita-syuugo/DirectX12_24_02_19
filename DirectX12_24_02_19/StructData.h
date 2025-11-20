@@ -64,9 +64,9 @@ struct Material
 	AdditionalMaterial additional;
 };
 
-struct MatricexsData
+struct SceneMatricexs
 {
 	XMMATRIX world;
-	XMMATRIX view;
-	XMMATRIX proj;
+	XMMATRIX view;XMMATRIX proj;
+	XMFLOAT3 eye;
 };

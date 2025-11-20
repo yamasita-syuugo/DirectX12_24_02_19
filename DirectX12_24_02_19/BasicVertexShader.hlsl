@@ -5,6 +5,7 @@ Output BasicVS(float4 pos : POSITION,float4 normal : NORMAL, float2 uv : TEXCOOR
     Output output;
     output.svpos = mul(mul(mul(proj, view), world), pos);
     normal.w = 0;//•½sˆÚ“®¬•ª‚ğ–³Œø‚É‚·‚é
+    output.ray = normalize(pos.xyz - eye);
     output.normal = mul(world, normal);
     output.vnormal = mul(view, output.normal);
     output.uv = uv;
