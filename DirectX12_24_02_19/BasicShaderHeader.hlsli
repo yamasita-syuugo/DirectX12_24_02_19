@@ -14,10 +14,12 @@ struct Output
 //b -定数バッファー ビュー(CBV) 用
 
 SamplerState smp : register(s0);
-Texture2D<float4> test : register(t0);
-Texture2D<float4> tex : register(t1);
-Texture2D<float4> sph : register(t2);
-Texture2D<float4> spa : register(t3);
+//Texture2D<float4> test : register(t0);
+Texture2D<float4> tex : register(t0);
+Texture2D<float4> sph : register(t1);
+Texture2D<float4> spa : register(t2);
+//sph : スフィアマップ(乗算)
+//spa : スフィアマップ(加算)
 
 //cbuffer cbuff0 : register(b0) //定数バッファー
 //{

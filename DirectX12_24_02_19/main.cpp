@@ -5,7 +5,7 @@ void DebugOutputFormatString(const char* format, ...) {
 #ifdef _DEBUG
 	va_list valist;
 	va_start(valist, format);
-	printf(format, valist);
+	vwprintf((wchar_t*)format, valist);
 	va_end(valist);
 #endif // _DEBUG
 }
@@ -18,7 +18,8 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-#define HRESULT_(function){ HRESULT result = function;if(result != S_OK){ cout << hex/*16進数*/ << result << endl; getchar(); return 1;}}
+int resultInt = 1;
+#define HRESULT_(function){ HRESULT result = function;if(result != S_OK){ cout << hex/*16進数*/ << result << endl; (void)getchar(); return resultInt;}resultInt++;}
 
 //モデルのパスとテクスチャのパスから合成パスを得る
 string GetTexturePathFromModelAndTexPath(const string& modelTath, const char* texPath);
@@ -31,11 +32,50 @@ string GetExtension(const string& path);
 pair<string,string> SplitFileName(const string& path, const char splitter = '*');
 
 ComPtr<ID3D12Device> _dev = nullptr;
+ComPtr<ID3D12GraphicsCommandList> _cmdList = nullptr;
+ComPtr<ID3D12CommandAllocator> _cmdAllocator = nullptr;
+ComPtr<ID3D12CommandQueue> _cmdQueue = nullptr;
+
 ComPtr<IDXGIFactory7> _dxgiFactory = nullptr;
 ComPtr<IDXGISwapChain3> _swapchain = nullptr;
-ComPtr<ID3D12CommandAllocator> _cmdAllocator = nullptr;
-ComPtr<ID3D12GraphicsCommandList> _cmdList = nullptr;
-ComPtr<ID3D12CommandQueue> _cmdQueue = nullptr;
+
+//デフォルトグラデーションテクスチャ
+ID3D12Resource* CreateGrayGradationTexture() {
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	resDesc.Width = 4;//幅
+	resDesc.Height = 256;//高さ
+	resDesc.DepthOrArraySize = 1;
+	resDesc.SampleDesc.Count = 1;
+	resDesc.SampleDesc.Quality = 0;//
+	resDesc.MipLevels = 1;//
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;//レイアウトについては決定しない
+	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;//とくにフラグなし
+
+	D3D12_HEAP_PROPERTIES texHeapProp = {};
+	texHeapProp.Type = D3D12_HEAP_TYPE_CUSTOM;//特殊な設定なのでdefaultでもuploadでもなく
+	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;//ライトバックで
+	texHeapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;//転送がL0つまりCPU側から直で
+	texHeapProp.CreationNodeMask = 0;//単一アダプタのため0
+	texHeapProp.VisibleNodeMask = 0;//単一アダプタのため0
+
+	ID3D12Resource* gradBuff;
+	HRESULT result = _dev->CreateCommittedResource(&texHeapProp, D3D12_HEAP_FLAG_NONE, &resDesc, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, nullptr, IID_PPV_ARGS(&gradBuff));
+
+
+	std::vector<unsigned int> data(4 * 256);
+	auto it = data.begin();
+	unsigned int c = 0xff;
+	for (; it != data.end(); it += 4) {
+		//RGBAが逆並びのためRGBマクロと0xff<<24を用いて表す
+		auto col = (0xff << 24) | RGB(c, c, c);
+		std::fill(it, it + 4, col);
+		--c;
+	}
+	result = gradBuff->WriteToSubresource(0, nullptr, data.data(), 4 * sizeof(unsigned int), sizeof(unsigned int) * data.size());
+	return gradBuff;
+}
 
 int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 
@@ -386,12 +426,28 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 		}
 		auto matDescHeapH = materialDescHeap->GetCPUDescriptorHandleForHeapStart();
 		auto inc = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		auto gradTex = CreateGrayGradationTexture();
 		ID3D12Resource* whiteTex = CreateWhiteTexture();
 		ID3D12Resource* blackTex = CreateBlackTexture();
 		vector<ID3D12Resource*> textureResources(pmdMaterials.size()); 
 		vector<ID3D12Resource*> sphResources(materials.size());
-		vector<ID3D12Resource*> spaResources(materials.size());{
+		vector<ID3D12Resource*> spaResources(materials.size());
+		vector<ID3D12Resource*> toonResources(materials.size()); {
 			for (int i = 0; i < pmdMaterials.size(); i++) {
+				string toonFilePath = "toon/";
+				char toonFileName[16];
+				sprintf_s(toonFileName, "toon%02d.bmp", pmdMaterials[i].toonIdx + 1);
+				toonFilePath += toonFileName;
+			 	toonResources[i] = LoadTextureFromFile(toonFilePath);
+			if (toonResources[i] == nullptr) {
+				srvDesc.Format = gradTex->GetDesc().Format;
+				_dev->CreateShaderResourceView(gradTex, &srvDesc, matDescHeapH);
+			}
+			else {
+				srvDesc.Format = toonResources[i]->GetDesc().Format;
+				_dev->CreateShaderResourceView(toonResources[i], &srvDesc, matDescHeapH);
+			}
+
 				if (strlen(pmdMaterials[i].texFilePath) == 0) { textureResources[i] = nullptr; sphResources[i] = nullptr; }
 				string texFileName = {};
 				string sphFileName = {};
@@ -438,7 +494,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 				if (strModelPath.size() < spaFilePath.size())tmp = LoadTextureFromFile(spaFilePath);
 				spaResources[i] = tmp;
 			}
-			int a = 0;
+
 		}
 		for (int i = 0; i < materials.size(); i++) {
 			_dev->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
@@ -480,7 +536,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 	ID3D12RootSignature* rootsignature; {
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {}; {
 			{
-				D3D12_DESCRIPTOR_RANGE descTblRange[2] = {};
+				D3D12_DESCRIPTOR_RANGE descTblRange[3] = {};
 				D3D12_DESCRIPTOR_RANGE MaterialTblRange[2] = {}; {
 					//basicDescHeap
 					descTblRange[0].NumDescriptors = 1;
@@ -488,9 +544,13 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 					descTblRange[0].BaseShaderRegister = 0;
 					descTblRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 					descTblRange[1].NumDescriptors = 1;
-					descTblRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//種別はテクスチャ
-					descTblRange[1].BaseShaderRegister = 0;
+					descTblRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	//種別はテクスチャ
+					descTblRange[1].BaseShaderRegister = 2;
 					descTblRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+					descTblRange[2].NumDescriptors = 4;
+					descTblRange[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//種別はテクスチャ
+					descTblRange[2].BaseShaderRegister = 3;
+					descTblRange[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 					//materialDescHeap
 					MaterialTblRange[0].NumDescriptors = 1;
 					MaterialTblRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	//種別は定数
@@ -498,7 +558,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 					MaterialTblRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 					MaterialTblRange[1].NumDescriptors = 3;//テクスチャ2つ(基本とsph)
 					MaterialTblRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	//種別はテクスチャ
-					MaterialTblRange[1].BaseShaderRegister = 1;//register1だと使えなかった
+					MaterialTblRange[1].BaseShaderRegister = 0;//register1だと使えなかった
 					MaterialTblRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 				}
 				D3D12_ROOT_PARAMETER rootparam[2] = {}; {//[0]world,[1]material→違いはBaseShaderRegisterだけ
@@ -506,7 +566,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 					rootparam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 					rootparam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 					rootparam[0].DescriptorTable.pDescriptorRanges = &descTblRange[0];
-					rootparam[0].DescriptorTable.NumDescriptorRanges = 2;//2から1に変更→ここのテクスチャがあるとmaterialDescHeapのテクスチャが使えない?→このテクスチャがregister1なら問題なく通った
+					rootparam[0].DescriptorTable.NumDescriptorRanges = 3;//2から1に変更→ここのテクスチャがあるとmaterialDescHeapのテクスチャが使えない?→このテクスチャがregister1なら問題なく通った
 					//materialDescHeap
 					rootparam[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 					rootparam[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
@@ -557,7 +617,8 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 			gpipeline.BlendState.AlphaToCoverageEnable = false;
 			gpipeline.BlendState.IndependentBlendEnable = false;
 
-			D3D12_RENDER_TARGET_BLEND_DESC renderTargetBlendDesc = {}; {
+			{
+				D3D12_RENDER_TARGET_BLEND_DESC renderTargetBlendDesc = {};
 				renderTargetBlendDesc.BlendEnable = false;
 				renderTargetBlendDesc.LogicOpEnable = false;
 				renderTargetBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
@@ -608,22 +669,39 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 	D3D12_RECT scissorrect = {}; {
 		scissorrect.top = 0; scissorrect.left = 0; scissorrect.right = scissorrect.left + WINDOW_WIDTH; scissorrect.bottom = scissorrect.top + WINDOW_HEIGHT;
 	}
+	BGMObject BGMObject;
+	//BGMObject.initialize();
 
-	DirectInput keyboard(hIns, hwnd);
+	//DirectInput keyboard(hIns, hwnd);
 	//ループ作成--------------------------------------------------------------------------
 	MSG msg = {};
 	float angle = 0; bool a = false;
+	XMFLOAT4 position = {};
 	while (true) {
-		keyboard.Execute(hwnd);
-		BYTE* control = keyboard.GetKBState();
-		BYTE* oldControl = keyboard.GetOldKBState();
-		BYTE tmp[256];
-		memcpy(tmp, control, sizeof(BYTE) * 256);
-		a = false;
-		for (int i = 0; i < 256; i++)if (tmp[i] != 0)a = true;
+		//キー入力やウィンドウ状態の獲得
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) { TranslateMessage(&msg); DispatchMessage(&msg); }
 
 		if (!a)angle += 0.1f;
-		XMFLOAT3 eye(cos(angle), sin(angle) + 10, -10); XMFLOAT3 target(0.0f, 10.0f, 0.0f); XMFLOAT3 up(0, 1, 0);
+
+		//if (msg.wParam == VK_RIGHT && msg.message == WM_KEYDOWN)position.x -= .1;//角つく
+		//if (msg.wParam == VK_LEFT && msg.message == WM_KEYDOWN)position.x += .1;
+		if (GetAsyncKeyState(VK_RIGHT) & 0x8000)position.x -= .1;
+		if (GetAsyncKeyState(VK_LEFT) & 0x8000)position.x += .1;
+		if (GetAsyncKeyState(VK_GAMEPAD_LEFT_TRIGGER) & 0x8000)position.x -= .1;
+		if (GetAsyncKeyState(VK_GAMEPAD_RIGHT_TRIGGER) & 0x8000)position.x += .1;
+		if (GetAsyncKeyState(0x44) & 0x8000)position.x -= .1;
+		if (GetAsyncKeyState(0x41) & 0x8000)position.x += .1;
+
+
+		//keyboard.Execute(hwnd);
+		//BYTE* control = keyboard.GetKBState();
+		//BYTE* oldControl = keyboard.GetOldKBState();
+		//BYTE tmp[256];
+		//memcpy(tmp, control, sizeof(BYTE) * 256);
+		//a = false;
+		//for (int i = 0; i < 256; i++)if (tmp[i] != 0)a = true;
+
+		XMFLOAT3 eye(cos(angle) + position.x, sin(angle) + 10, -10); XMFLOAT3 target(position.x,10.0f,eye.y +  0.0f); XMFLOAT3 up(0, 1, 0);
 		worldMat = XMMatrixRotationY(angle * 0.1f);
 		viewMat = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
 		mapMatrix->world = worldMat;
@@ -644,34 +722,37 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 				//depthハンドルを入れるとオブジェクトが消える->ClearDepthStencilView第三引数が1000で解決:0.0f～1.0fに正規化出来てない->ビューポートのMaxDepthが200だった
 				float clearColor[] = { 0.0f,1.0f,1.0f,1.0f, };
 				_cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);//ウィンドウを塗りつぶす->描画命令後だと描画を塗りつぶす
-				_cmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+				_cmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);//深度バッファのリセット
 			}
 
 			//描画命令------------------------------------------
 			_cmdList->RSSetViewports(1, &viewport);
 			_cmdList->RSSetScissorRects(1, &scissorrect);
 
-			_cmdList->IASetPrimitiveTopology(/*D3D_PRIMITIVE_TOPOLOGY_POINTLIST*/D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);//頂点データの解釈
-			_cmdList->IASetVertexBuffers(0, 1, &vbView);//毎フレームセットしないといけない
-			_cmdList->IASetIndexBuffer(&ibView);//毎フレームセットしないといけない
+			_cmdList->IASetPrimitiveTopology(/*D3D_PRIMITIVE_TOPOLOGY_POINTLIST*/D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);//頂点データの連結の解釈
+			_cmdList->IASetVertexBuffers(0, 1, &vbView);//頂点データ//毎フレームセットしないといけない
+			_cmdList->IASetIndexBuffer(&ibView);//頂点データの連結データ//毎フレームセットしないといけない
 
-			_cmdList->SetPipelineState(_pipelineState.Get());
-			_cmdList->SetGraphicsRootSignature(rootsignature);//SetGraphicsRootDescriptorTableより前に書く→ヒープの設定情報？
+			_cmdList->SetGraphicsRootSignature(rootsignature);//グラボに受け渡し設定//SetGraphicsRootDescriptorTableより前に書く→ヒープの設定情報？
+			_cmdList->SetPipelineState(_pipelineState.Get());//入力データの扱い方設計図
 			{
-				_cmdList->SetDescriptorHeaps(1, &basicDescHeap);
-				auto heapHandle = basicDescHeap/*materialDescHeap*/->GetGPUDescriptorHandleForHeapStart();//参考書との相違点->リソースと定数、どちらのバッファービューを先に入れるか次第
-				heapHandle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-				_cmdList->SetGraphicsRootDescriptorTable(0, heapHandle);
-
-				_cmdList->SetDescriptorHeaps(1, &materialDescHeap);
-				auto materialH = materialDescHeap->GetGPUDescriptorHandleForHeapStart();
-				unsigned int idxOffset = 0;
-				auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 4;
-				for (auto& m : materials) {
-					_cmdList->SetGraphicsRootDescriptorTable(1, materialH);//第一引数(RootParameterIndex)
-					_cmdList->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
-					materialH.ptr += cbvsrvIncSize;//0～19で色が変わる(水色、青、紺、薄い黄、白)それ以外で真っ黒→31白→関数SetPrimitive,SetVertex,SetIndexを上に移動で色ずれはある物の色分けはできた
-					idxOffset += m.indicesNum;
+				{
+					_cmdList->SetDescriptorHeaps(1, &basicDescHeap);//デスクリプタのヒープ領域を設定
+					auto heapHandle = basicDescHeap/*materialDescHeap*/->GetGPUDescriptorHandleForHeapStart();//参考書との相違点->リソースと定数、どちらのバッファービューを先に入れるか次第
+					heapHandle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+					_cmdList->SetGraphicsRootDescriptorTable(0, heapHandle);
+				}
+				{
+					_cmdList->SetDescriptorHeaps(1, &materialDescHeap);
+					auto materialH = materialDescHeap->GetGPUDescriptorHandleForHeapStart();
+					unsigned int idxOffset = 0;
+					auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) * 4;
+					for (auto& m : materials) {
+						_cmdList->SetGraphicsRootDescriptorTable(1, materialH);//第一引数(RootParameterIndex)
+						_cmdList->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
+						materialH.ptr += cbvsrvIncSize;//0～19で色が変わる(水色、青、紺、薄い黄、白)それ以外で真っ黒→31白→関数SetPrimitive,SetVertex,SetIndexを上に移動で色ずれはある物の色分けはできた
+						idxOffset += m.indicesNum;
+					}
 				}
 			}
 			//_cmdList->DrawIndexedInstanced(indices.size()/*index数*/, 1, 0, 0, 0);
@@ -682,7 +763,7 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 		//IDXGISwapChain4動作-------------------------------
 		{
 			ID3D12CommandList* cmdlists[] = { _cmdList.Get() };
-			_cmdQueue->ExecuteCommandLists(1, cmdlists);
+			_cmdQueue->ExecuteCommandLists(1, cmdlists);//todo:非同期でGPUを動かしている、メインの処理にGPU側が追い付かず落ちる → Sleep関数で一時停止
 
 			HRESULT_(_cmdAllocator->Reset());
 			HRESULT_(_cmdList->Reset(_cmdAllocator.Get(), nullptr));
@@ -690,11 +771,11 @@ int WINAPI WinMain(HINSTANCE hIns, HINSTANCE, LPSTR, int) {
 			HRESULT_(_swapchain->Present(1, 0));
 		}
 
+		BGMObject.Update();//todo:
+
+		Sleep(1000.0f/60);//60fps
+
 		//ループ終了----------------------------------------------------------------------
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
 		if (msg.message == WM_QUIT) {
 			break;
 		}
@@ -799,7 +880,7 @@ ID3D12Resource* CreateWhiteTexture() {
 	}
 	vector<unsigned char> data(4 * 4 * 4);
 	std::fill(data.begin(), data.end(), 0xff);
-	auto result = whiteBuff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, data.size());
+	auto result = whiteBuff->WriteToSubresource(0, nullptr, data.data(), 4 * 4, (UINT)data.size());
 	return whiteBuff;
 }
 ID3D12Resource* CreateBlackTexture() {

@@ -94,6 +94,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\syuugo_main\Downloads\DirectXTex-main (1)\DirectXTex-main\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -128,6 +129,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\syuugo_main\Downloads\DirectXTex-main (1)\DirectXTex-main\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
@@ -141,9 +143,11 @@
   <ItemGroup>
     <ClCompile Include="KeyboardState.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Music.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KeyboardState.h" />
+    <ClInclude Include="Music.h" />
     <ClInclude Include="StructData.h" />
     <ClInclude Include="UseHeader.h" />
     <ClInclude Include="value.h" />

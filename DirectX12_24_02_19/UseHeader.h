@@ -24,6 +24,8 @@ using namespace DirectX;
 #include<DirectXTex.h>
 #pragma comment(lib,"DirectXTex.lib")
 
+#include"Music.h"
+
 #include"StructData.h"
 
-#include "KeyboardState.h"//’†‚É<dinput.h>
+//#include "KeyboardState.h"//’†‚É<dinput.h>
